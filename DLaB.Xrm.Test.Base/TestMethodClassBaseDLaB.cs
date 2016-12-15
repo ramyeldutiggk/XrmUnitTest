@@ -40,13 +40,15 @@ namespace DLaB.Xrm.Test
         /// </value>
         protected AssertCrm AssertCrm { get; set; }
 
+        private LogRecorder _recorder;
+        /// <summary>Gets or sets the logger.</summary>
+        /// <value>The logger.</value>
+        protected ITestLogger Logger { get { return _recorder; } set { _recorder = new LogRecorder(value); } }
+
         /// <summary>
-        /// Gets or sets the logger.
+        /// List of Logs that have been recorded.  This includes both internal TestMethodClassBase Logs, and any logs logged with the Logger
         /// </summary>
-        /// <value>
-        /// The logger.
-        /// </value>
-        protected ITestLogger Logger { get; set; }
+        protected IEnumerable<TraceParams> Logs => _recorder.Logs;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TestMethodClassBaseDLaB"/> class.
@@ -54,7 +56,7 @@ namespace DLaB.Xrm.Test
         protected TestMethodClassBaseDLaB()
         {
             AssumedEntities = new Assumptions.AssumedEntities();
-            EntityIds = new Dictionary<string, List<Guid>>();
+            EntityIdsByLogicalName = new Dictionary<string, List<Id>>();
             EnableServiceExecutionTracing = true;
             MultiThreadPostDeletion = true;
         }
@@ -67,9 +69,9 @@ namespace DLaB.Xrm.Test
         protected virtual void InitializeEntityIds()
         {
             // Find all nested Ids
-            var nestedIds = new Dictionary<string, List<Guid>>();
+            var nestedIds = new Dictionary<string, List<Id>>();
             foreach (var id in GetType().GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic).SelectMany(Extensions.GetIds)) {
-                nestedIds.AddOrAppend(id);
+                nestedIds.AddOrAppend(id, id);
             }
 
             // Add the nested Ids' Logical Names to the Mapper
@@ -81,10 +83,10 @@ namespace DLaB.Xrm.Test
             // Add the nested Ids in the Deletion Order of the Mapper
             foreach (var entity in EntityDependency.Mapper.EntityDeletionOrder)
             {
-                List<Guid> ids;
+                List<Id> ids;
                 if (nestedIds.TryGetValue(entity, out ids))
                 {
-                    EntityIds.AddOrAppend(entity, ids.ToArray());
+                    EntityIdsByLogicalName.AddOrAppend(entity, ids.ToArray());
                 }
             }
         }
@@ -95,36 +97,37 @@ namespace DLaB.Xrm.Test
         protected Assumptions.AssumedEntities AssumedEntities { get; set; }
 
         /// <summary>
-        /// Populate with EntityLogical name keys, and list of ids.  Default Implementation of Cleanup methods will delete
+        /// Populated with EntityLogical name keys, and list of ids.  Default Implementation of Cleanup methods will delete
         /// all entities in the dictionary, GetEntityReference will use it to populate Entities
         /// </summary>
-        protected Dictionary<string, List<Guid>> EntityIds { get; set; }
+        protected Dictionary<string, List<Id>> EntityIdsByLogicalName { get; set; }
+
 
         /// <summary>
         /// Will get populated at the very beginning of Test
         /// </summary>
-        protected Dictionary<Guid, Id> Entities { get; private set; }
+        protected Dictionary<Guid, Id> EntityIds { get; private set; }
 
         private void PopulateEntityReferences()
         {
-            Entities = new Dictionary<Guid, Id>();
-            foreach (var entry in EntityIds)
+            EntityIds = new Dictionary<Guid, Id>();
+            foreach (var entry in EntityIdsByLogicalName)
             {
                 foreach (var id in entry.Value)
                 {
                     try
                     {
-                        Entities.Add(id, new Id(entry.Key, id));
+                        EntityIds.Add(id, id);
                     }
                     catch (ArgumentException ex)
                     {
                         if (ex.Message != "An item with the same key has already been added.") { throw; }
 
-                        if (Entities[id].LogicalName == entry.Key)
+                        if (EntityIds[id].LogicalName == entry.Key)
                         {
                             throw new ArgumentException($"Id {id} is defined twice for entity type {entry.Key}");
                         }
-                        throw new ArgumentException($"An attempt was made to define Id {id} as type {entry.Key}, but it has already been defined as a {Entities[id].LogicalName}");
+                        throw new ArgumentException($"An attempt was made to define Id {id} as type {entry.Key}, but it has already been defined as a {EntityIds[id].LogicalName}");
                     }
                 }
             }
@@ -157,7 +160,7 @@ namespace DLaB.Xrm.Test
         /// <param name="service"></param>
         protected virtual void CleanupDataPreInitialization(IOrganizationService service)
         {
-            foreach (var entityType in EntityIds)
+            foreach (var entityType in EntityIdsByLogicalName)
             {
                 var entityIdsToDelete = entityType.Value;
 
@@ -172,7 +175,7 @@ namespace DLaB.Xrm.Test
                         ActiveOnly = false,
                         Columns = new ColumnSet(false),
                     }).
-                    WhereIn(EntityHelper.GetIdAttributeName(entityType.Key), entityType.Value);
+                    WhereIn(EntityHelper.GetIdAttributeName(entityType.Key), entityType.Value.Select(i => i.EntityId));
 
                 foreach (var entity in service.RetrieveMultiple(qe).Entities)
                 {
@@ -192,9 +195,9 @@ namespace DLaB.Xrm.Test
 
             var requests = new OrganizationRequestCollection();
 
-            foreach (var id in EntityIds.Where(e => e.Key != "businessunit").SelectMany(entityType => entityType.Value))
+            foreach (var id in EntityIdsByLogicalName.Where(e => e.Key != "businessunit").SelectMany(entityType => entityType.Value))
             {
-                requests.Add(new DeleteRequest { Target = Entities[id] });
+                requests.Add(new DeleteRequest { Target = EntityIds[id] });
             }
 
             if (requests.Any())
@@ -219,8 +222,8 @@ namespace DLaB.Xrm.Test
                     totalWatch.ElapsedMilliseconds);
             }
 
-            List<Guid> businessIds;
-            if (!EntityIds.TryGetValue("businessunit", out businessIds))
+            List<Id> businessIds;
+            if (!EntityIdsByLogicalName.TryGetValue("businessunit", out businessIds))
             {
                 return;
             }
@@ -324,7 +327,7 @@ namespace DLaB.Xrm.Test
             {
                 methodClassName = methodClassName.Substring(0, methodClassName.Length - "method".Length);
             }
-            return ("Unit Test - " + methodClassName.SpaceOutCamelCase()).PadRight(maxNameLength).Substring(0, maxNameLength).TrimEnd();
+            return ("Unit Test - " + methodClassName.SpaceOutCamelCase().Replace("_ ", " ").Replace("_", " ")).PadRight(maxNameLength).Substring(0, maxNameLength).TrimEnd();
         }
 
         /// <summary>
@@ -337,12 +340,22 @@ namespace DLaB.Xrm.Test
         }
 
         /// <summary>
+        /// Gets the organization service builder that will be used to 
+        /// </summary>
+        /// <param name="service">The service.</param>
+        /// <returns></returns>
+        protected virtual IAgnosticServiceBuilder GetOrganizationServiceBuilder(IOrganizationService service)
+        {
+            return new OrganizationServiceBuilder(service);
+        }
+
+        /// <summary>
         /// Gets either the Local Crm Organization Service, or the real connection to CRM, depending on the UnitTestSettings.user.config settings.
         /// </summary>
         /// <returns></returns>
         protected virtual IOrganizationService GetIOrganizationService()
         {
-            return new OrganizationServiceBuilder(GetInternalOrganizationServiceProxy()).
+            return GetOrganizationServiceBuilder(GetInternalOrganizationServiceProxy()).
                 WithEntityNameDefaulted((e, i) => GetUnitTestName(i.MaximumLength)).
                 AssertIdNonEmptyOnCreate().
                 WithDefaultParentBu().Build();
@@ -351,7 +364,7 @@ namespace DLaB.Xrm.Test
         private IClientSideOrganizationService Service { get; set; }
         private IClientSideOrganizationService GetInternalOrganizationServiceProxy()
         {
-            return Service ?? (Service = (IClientSideOrganizationService)new OrganizationServiceBuilder(new FakeIOrganizationService(TestBase.GetOrganizationService(), Logger)).WithBusinessUnitDeleteAsDeactivate().Build());
+            return Service ?? (Service = (IClientSideOrganizationService) new OrganizationServiceBuilder(new FakeIOrganizationService(TestBase.GetOrganizationService(), Logger)).WithBusinessUnitDeleteAsDeactivate().Build());
         }
 
         /// <summary>
@@ -364,7 +377,7 @@ namespace DLaB.Xrm.Test
             var timer = new TestActionTimer(logger);
             LoadConfigurationSettingsOnce(this);
             InitializeEntityIds();
-            if (EntityIds != null && EntityIds.Count > 0)
+            if (EntityIdsByLogicalName != null && EntityIdsByLogicalName.Count > 0)
             {
                 timer.Time(PopulateEntityReferences, "Initialization Entity Reference (ms): ");
             }

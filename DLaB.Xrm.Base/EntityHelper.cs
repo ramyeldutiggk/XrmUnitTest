@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using DLaB.Common;
 using Microsoft.Xrm.Sdk;
 
 namespace DLaB.Xrm
@@ -225,18 +226,6 @@ namespace DLaB.Xrm
         public static PrimaryFieldInfo GetPrimaryFieldInfo(string logicalName)
         {
             var info = new PrimaryFieldInfo();
-            if (logicalName.Length >= 4 && logicalName[3] == '_')
-            {
-                // Handle Special Cases
-                switch (logicalName)
-                {
-                    default:
-                        info.AttributeName = logicalName.Substring(0, 4) + "name";
-                        break;
-                }
-            }
-            else
-            {
                 switch (logicalName)
                 {
                     case "businessunitnewsarticle":
@@ -250,6 +239,8 @@ namespace DLaB.Xrm
 
                     case "customerrelationship":
                         info.AttributeName = "customerroleidname";
+                        info.ReadOnly = true;
+                        info.IsAttributeOf = true;
                         break;
 
                     case "importjob":
@@ -268,9 +259,16 @@ namespace DLaB.Xrm
                         break;
 
                     case "contact":
-                    case "lead":
                     case "systemuser":
+                    case "lead":
                         info.AttributeName = "fullname";
+                        info.BaseAttributes.Add("firstname");
+                        info.BaseAttributes.Add("lastname");
+                        if (logicalName == "lead")
+                        {
+                            info.BaseAttributes.Add("companyname"); 
+                        }
+                        info.ReadOnly = true;
                         break;
 
                     case "solution":
@@ -362,6 +360,8 @@ namespace DLaB.Xrm
                     case "activityparty":
                         info.AttributeName = "partyidname";
                         info.MaximumLength = 400;
+                        info.ReadOnly = true;
+                        info.IsAttributeOf = true;
                         break;
 
                     case "invoicedetail":
@@ -370,6 +370,8 @@ namespace DLaB.Xrm
                     case "quotedetail":
                     case "salesorderdetail":
                         info.AttributeName = "productidname";
+                        info.ReadOnly = true;
+                        info.IsAttributeOf = true;
                         break;
 
                     case "socialprofile":
@@ -378,6 +380,8 @@ namespace DLaB.Xrm
 
                     case "postfollow":
                         info.AttributeName = "regardingobjectidname";
+                        info.ReadOnly = true;
+                        info.IsAttributeOf = true;
                         info.MaximumLength = 4000;
                         break;
 
@@ -438,41 +442,18 @@ namespace DLaB.Xrm
                         break;
 
                     default:
-                        info.AttributeName = null;
+                        if (logicalName.Contains('_'))
+                        {
+                            info.AttributeName = logicalName.SubstringByString(0, "_") + "_name";
+                        }
+                        else
+                        {
+                            info.AttributeName = null;
+                        }
                         break;
                 }
-            }
 
             return info;
-        }
-
-        /// <summary>
-        /// Contains information about the given Primary Name Field for an Entity
-        /// </summary>
-        public class PrimaryFieldInfo
-        {
-            /// <summary>
-            /// Gets or sets the name of the attribute.
-            /// </summary>
-            /// <value>
-            /// The name of the attribute.
-            /// </value>
-            public string AttributeName { get; set; }
-            /// <summary>
-            /// Gets or sets the maximum length.
-            /// </summary>
-            /// <value>
-            /// The maximum length.
-            /// </value>
-            public int MaximumLength { get; set; }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref="PrimaryFieldInfo"/> class.
-            /// </summary>
-            public PrimaryFieldInfo()
-            {
-                MaximumLength = 100;
-            }
         }
 
         #endregion Determine Entity Attribute Name Name

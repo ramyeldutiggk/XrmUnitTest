@@ -2,14 +2,15 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting; 
 using DLaB.Xrm.Entities;
 using DLaB.Xrm.Plugin; // Contains Early Bound Entities
-using Example.MsTestBase; // Test Base Project.  Contains code that is shared amoung all Unit Test Projects
 using Example.MsTestBase.Builders; // Fluent Builder Namespace.  Builders can be used to create anything that's required, from creating an entity, to a OrganizationService, to a Plugin
-using Example.Plugin; // Generic Plugin that contains the plugin to test
 
 namespace Example.MsTest
 {
+    /// <summary>
+    /// A simple plugin tests.  Testing the plugin does not need the IOrganizationService, so plugin is tested directly without utilizing a Test Method Class
+    /// </summary>
     [TestClass]
-    public class RemovePhoneNumberFormattingTests
+    public class SimplePluginTests
     {
         #region ContactHasFormatting_Should_RemoveFormatting
 
@@ -38,7 +39,6 @@ namespace Example.MsTest
             //
             // Arrange
             //
-            TestInitializer.InitializeTestSettings();
             var contact = new Contact { MobilePhone = "A-1-B-2-C-3" }; // Create Contact to use as target
             var context = new PluginExecutionContextBuilder(). // Create Context Which is required by the service provider, which is required by the plugin
                 WithRegisteredEvent(plugin.RegisteredEvents.First(e => e.EntityLogicalName == Contact.EntityLogicalName)). // Specifies the plugin event to use in the context

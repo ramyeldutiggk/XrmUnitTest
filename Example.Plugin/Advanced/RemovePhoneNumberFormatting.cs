@@ -7,7 +7,7 @@ using Microsoft.Xrm.Sdk;
 namespace Example.Plugin.Advanced
 {
     /// <summary>
-    /// Class to remove all formatting of phone numbers.  
+    /// Plugin to remove all formatting of phone numbers.  
     /// </summary>
     public class RemovePhoneNumberFormatting : PluginBase
     {
@@ -65,7 +65,7 @@ namespace Example.Plugin.Advanced
                 return;
             }
 
-            entity[attribute] = new String(number.Where(char.IsNumber).ToArray());
+            entity[attribute] = new string(number.Where(char.IsNumber).ToArray());
         }
 
         private void ExecuteCrmAddresses(ExtendedPluginContext context)

@@ -10,7 +10,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Builders\CrmEnvironmentBuilderTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Builders\OrganizationServiceBuilderTests.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Builders\ServiceProviderBuilderTests.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)EntityDependencyTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IdTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TestMethodClassBaseDLaBTests.cs" />
   </ItemGroup>
 </Project>

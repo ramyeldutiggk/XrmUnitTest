@@ -13,12 +13,14 @@
     <Compile Include="$(MSBuildThisFileDirectory)AssertCrm.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Assumptions\AssumedEntities.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Assumptions\EntityDataAssumptionBaseAttribute.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Assumptions\IAssumptionEntityType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Assumptions\MultipleEntityDataAssumptionBaseAttribute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Builders\CrmEnvironmentBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Builders\EntityBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Builders\EntityBuilderManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Builders\Extensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Builders\GenericBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Builders\IAgnosticServiceBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Builders\IEntityBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Builders\OrganizationServiceBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Builders\PluginExecutionContextBuilder.cs" />
@@ -43,6 +45,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)IPathFinder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ITestFrameworkProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ITestLogger.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LogRecorder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PatherFinderProjectOfType.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PathFinderAbsolute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Settings\NamespaceSetting.cs" />
@@ -52,5 +55,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)TestBase.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TestMethodClassBaseDLaB.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TestSettings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TraceParams.cs" />
   </ItemGroup>
 </Project>
