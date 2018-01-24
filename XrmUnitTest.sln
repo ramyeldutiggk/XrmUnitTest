@@ -104,8 +104,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Code Snippets", "Code Snipp
 		Code Snippets\region.snippet = Code Snippets\region.snippet
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DLaB.Common.Tests", "DLaB.Common.Tests\DLaB.Common.Tests.csproj", "{4BCE674F-352E-4A6B-BAFF-3E6186E3CF5B}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example.Walkthrough", "Example.Walkthrough\Example.Walkthrough.csproj", "{3E728B41-02E5-42FD-B8D3-CF2C664E2226}"
 EndProject
 Global
